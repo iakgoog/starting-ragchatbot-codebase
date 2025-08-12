@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -29,6 +30,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New chat button
+    newChatButton.addEventListener('click', startNewChat);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -122,10 +125,26 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Handle both old format (strings) and new format (objects with text/link)
+        const sourceElements = sources.map(source => {
+            if (typeof source === 'string') {
+                // Old format - just return as text
+                return source;
+            } else if (source && source.text) {
+                // New format - create clickable link if link is available
+                if (source.link) {
+                    return `<a href="${source.link}" target="_blank" rel="noopener noreferrer">${source.text}</a>`;
+                } else {
+                    return source.text;
+                }
+            }
+            return source; // Fallback
+        });
+        
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourceElements.join(', ')}</div>
             </details>
         `;
     }
@@ -150,6 +169,28 @@ async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+}
+
+// Start a new chat session
+async function startNewChat() {
+    try {
+        // If we have an active session, notify backend to clean it up
+        if (currentSessionId) {
+            await fetch(`${API_URL}/session/${currentSessionId}`, {
+                method: 'DELETE'
+            });
+        }
+    } catch (error) {
+        console.warn('Failed to cleanup previous session:', error);
+        // Continue anyway - frontend cleanup is more important
+    }
+    
+    // Clear frontend state and start fresh
+    await createNewSession();
+    
+    // Clear any text in the input
+    chatInput.value = '';
+    chatInput.focus();
 }
 
 // Load course statistics

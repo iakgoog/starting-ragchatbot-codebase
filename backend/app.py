@@ -71,6 +71,14 @@ async def query_documents(request: QueryRequest):
             session_id=session_id
         )
     except Exception as e:
+        # Enhanced error logging for debugging
+        import traceback
+        error_details = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "traceback": traceback.format_exc()
+        }
+        print(f"Query endpoint error: {error_details}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/courses", response_model=CourseStats)
@@ -82,6 +90,15 @@ async def get_course_stats():
             total_courses=analytics["total_courses"],
             course_titles=analytics["course_titles"]
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/session/{session_id}")
+async def delete_session(session_id: str):
+    """Delete/clear a conversation session"""
+    try:
+        rag_system.session_manager.clear_session(session_id)
+        return {"message": "Session cleared successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
