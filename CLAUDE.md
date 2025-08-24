@@ -15,6 +15,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Application runs on http://localhost:8000
 - API docs available at http://localhost:8000/docs
 
+### Code Quality Tools
+- **Quality check script**: `uv run scripts/quality_check.py` (check all quality tools)
+- **Auto-fix formatting**: `uv run scripts/quality_check.py --fix`
+- **Individual tools**:
+  - Black formatting: `uv run black backend/ main.py scripts/`
+  - Import sorting: `uv run isort backend/ main.py scripts/`
+  - Linting: `uv run flake8 backend/ main.py scripts/`
+  - Type checking: `uv run mypy backend/ main.py scripts/`
+- **Install dev dependencies**: `uv sync --group dev`
+
 ## Architecture Overview
 
 ### RAG System Design
